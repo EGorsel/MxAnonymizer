@@ -1,4 +1,4 @@
-"""mxanon CLI."""
+"""mxanonymizer CLI."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from pathlib import Path
 import click
 import psycopg
 
-from mxanon.config import ConfigError, Manifest, load_manifest
-from mxanon.db import run_anonymization
-from mxanon.discover import discover, render_draft_yaml
-from mxanon.system_tables import apply_system_rules, reset_system_user_passwords
-from mxanon.verify import run_verification, write_report
+from mxanonymizer.config import ConfigError, Manifest, load_manifest
+from mxanonymizer.db import run_anonymization
+from mxanonymizer.discover import discover, render_draft_yaml
+from mxanonymizer.system_tables import apply_system_rules, reset_system_user_passwords
+from mxanonymizer.verify import run_verification, write_report
 
 
 def _setup_logging(verbose: bool) -> None:

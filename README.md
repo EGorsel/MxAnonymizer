@@ -1,8 +1,42 @@
 # MxAnonymizer
 
-Anonymize Mendix production PostgreSQL dumps so they're safe to debug against
-locally. Targets ANWB Mendix apps (Studio Pro 10.x), but the engine is
-generic — every PII rule lives in a per-app YAML manifest under `configs/`.
+**Anonymize Mendix production PostgreSQL databases for safe local debugging.**
+
+A manifest-driven CLI tool for the Mendix developer community. It replaces
+PII (names, emails, addresses, IBANs, etc.) with realistic-but-fake data so
+you can restore a production dump locally without exposing real customer data.
+
+Works with any Mendix Studio Pro 10.x PostgreSQL-backed app. The engine is
+generic — every PII rule lives in a per-app YAML manifest under `configs/`,
+not in code.
+
+MIT License — see [LICENSE](LICENSE).
+
+---
+
+## Quick Start
+
+**Requirements:** Python 3.11+, `psql` and `pg_restore` on `PATH`.
+
+```powershell
+# 1. Install
+pipx install git+https://github.com/your-org/MxAnonymizer.git
+
+# 2. Set the two required env vars (add these to your shell profile)
+$env:MXANON_SECRET = "pick-any-long-random-string-keep-it-stable"
+$env:MXANON_DEV_PASSWORD = "Devpass123!"
+
+# 3. Restore your production dump and anonymize in one step
+.\scripts\restore-and-anon.ps1 -DumpPath C:\Downloads\prod.backup -App myapp
+```
+
+That script drops/recreates `myapp_local`, restores the dump, runs
+`MxAnonymizer run`, and then `MxAnonymizer verify`. If verify fails, check `./reports/`
+before using the database.
+
+**First time with a new app?** See [Onboarding a new Mendix app](#onboarding-a-new-mendix-app) below.
+
+---
 
 ## How it works (plain English)
 
@@ -37,7 +71,7 @@ After anonymization, the tool re-scans the database for patterns that look like 
 
 ### How the tool finds sensitive columns
 
-During the one-time *discovery* step (`mxanon discover`), two signals are used to flag columns:
+During the one-time *discovery* step (`MxAnonymizer discover`), two signals are used to flag columns:
 
 **1. Column name matching** — A built-in list maps known name patterns (Dutch + English) to strategies. The match is case-insensitive, strips underscores, and checks for a substring match, so all of these would be caught:
 
@@ -50,14 +84,14 @@ During the one-time *discovery* step (`mxanon discover`), two signals are used t
 
 **2. Value sampling (fallback)** — If no column name matches, the tool samples up to 100 actual values from the column and tests them against regex patterns. If 70% or more of the sampled values look like an email address (or phone number, postcode, IBAN, etc.), the column is flagged — regardless of its name. A column called `contact_info` full of email addresses would still be caught.
 
-Discovery produces a **draft YAML config for human review**. You review it, correct any mistakes, and commit it. After that, `mxanon run` only does what the committed config says — the two-signal detection is a one-time bootstrapping aid, not a live lookup.
+Discovery produces a **draft YAML config for human review**. You review it, correct any mistakes, and commit it. After that, `MxAnonymizer run` only does what the committed config says — the two-signal detection is a one-time bootstrapping aid, not a live lookup.
 
 ---
 
 ## What it does
 
-Given a freshly restored local copy of a Mendix prod DB, `mxanon` rewrites
-PII columns in place using realistic Dutch fake values, while preserving:
+Given a freshly restored local copy of a Mendix prod DB, `MxAnonymizer` rewrites
+PII columns in place using realistic fake values, while preserving:
 
 - primary keys, foreign keys, and unique constraints
 - enum/status columns (only declared columns are touched)
@@ -96,24 +130,24 @@ $env:MXANON_DEV_PASSWORD = "Devpass123!"
 2. Restore it and anonymize in one go:
 
    ```powershell
-   .\scripts\restore-and-anon.ps1 -DumpPath C:\Downloads\prod.backup -App pinkpro
+   .\scripts\restore-and-anon.ps1 -DumpPath C:\Downloads\prod.backup -App myapp
    ```
 
-   That script drops/recreates `pinkpro_local`, runs `pg_restore`, then
-   `mxanon run` and `mxanon verify`. Exits non-zero if verification finds a
+   That script drops/recreates `myapp_local`, runs `pg_restore`, then
+   `MxAnonymizer run` and `MxAnonymizer verify`. Exits non-zero if verification finds a
    leak — don't proceed in that case.
 
-3. Point Studio Pro / the Mendix runtime at `pinkpro_local` and debug. Log
+3. Point Studio Pro / the Mendix runtime at `myapp_local` and debug. Log
    in with any anonymized username (visible in `system$user.Name`) and
    `MXANON_DEV_PASSWORD`.
 
 The four CLI subcommands the script wraps:
 
 ```
-mxanon discover --app <name> --conn <dsn>     # generate draft configs/<name>.yaml
-mxanon validate configs/<name>.yaml           # schema-check the manifest
-mxanon run --app <name> --conn <dsn>          # apply anonymization
-mxanon verify --app <name> --conn <dsn>       # leak + sanity checks
+MxAnonymizer discover --app <name> --conn <dsn>     # generate draft configs/<name>.yaml
+MxAnonymizer validate configs/<name>.yaml           # schema-check the manifest
+MxAnonymizer run --app <name> --conn <dsn>          # apply anonymization
+MxAnonymizer verify --app <name> --conn <dsn>       # leak + sanity checks
 ```
 
 ## Onboarding a new Mendix app
@@ -121,20 +155,40 @@ mxanon verify --app <name> --conn <dsn>       # leak + sanity checks
 1. Restore prod into `<app>_local`.
 2. Run discovery to get a starting point:
    ```powershell
-   mxanon discover --app <app> --conn postgresql://localhost/<app>_local
+   MxAnonymizer discover --app <app> --conn postgresql://localhost/<app>_local
    ```
 3. Open `configs/<app>.yaml`. Every line ends in a comment explaining why
    the column was flagged. Review and:
    - keep / change strategies
    - replace `TODO_REVIEW` placeholders with a real strategy or `null_value`
    - decide each `free_text_review` entry: `redact` it, or accept the risk
-4. `mxanon validate configs/<app>.yaml` to catch typos.
-5. `mxanon run` and `mxanon verify` against the local DB. Iterate.
+   - add `verify_patterns:` entries for any org-specific email domains or
+     patterns that should never appear in anonymized columns (see below)
+4. `MxAnonymizer validate configs/<app>.yaml` to catch typos.
+5. `MxAnonymizer run` and `MxAnonymizer verify` against the local DB. Iterate.
 6. Commit `configs/<app>.yaml` to git.
 
 When the prod schema changes (new fields), rerun `discover` to a temp file
 and `git diff` against the committed manifest — new PII candidates surface
 automatically.
+
+### Configuring leak detection
+
+By default, `MxAnonymizer verify` checks anonymized columns for real Dutch IBAN
+bank codes (INGB, RABO, ABNA, etc.). You can add org-specific patterns to
+your manifest:
+
+```yaml
+verify_patterns:
+  - label: org_email
+    pattern: '@mycompany\.(nl|com)$'
+  - label: internal_id_format
+    pattern: '^EMP-\d{6}$'
+```
+
+Patterns are Python regular expressions and are case-insensitive. They are
+checked against every value in every column the manifest declares as
+anonymized. The `label` appears in the verify report when a match is found.
 
 ## Strategy reference
 
@@ -152,7 +206,7 @@ automatically.
 | `fake_bsn_nl` | 9-digit number passing the eleven-test, in the reserved 9-prefix test range |
 | `fake_account_number_nl` | Pre-IBAN 10-digit Dutch account number |
 | `fake_license_plate_nl` | Sidecode 6 (`99-AAA-9`) |
-| `fake_vin` | 17-char VIN-shaped string prefixed `MXANON` |
+| `fake_vin` | 17-char VIN-shaped string prefixed `MxAnonymizer` |
 | `shift_date_days` | Original date ± deterministic offset within `params.range` (default 365) |
 
 For coherent multi-column addresses, set `row_transformer: address_nl` on
@@ -174,12 +228,19 @@ the table and map logical names to your DB column names via `params:`.
 - Encryption at rest of the local DB.
 - Schema (DDL) changes — the tool only `UPDATE`s.
 
+## Contributing
+
+Contributions are welcome — new strategies, bug fixes, and documentation
+improvements. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
+submitting a pull request. Security issues should be reported privately;
+see [SECURITY.md](SECURITY.md).
+
 ## Development
 
 ```powershell
 pip install -e ".[dev]"
 pytest                                              # unit tests
-$env:MXANON_TEST_DSN = "postgresql://localhost/mxanon_test"
+$env:MXANON_TEST_DSN = "postgresql://localhost/mxanonymizer_test"
 pytest tests/test_e2e.py                            # E2E (needs Postgres)
 ruff check src tests
 ```
@@ -191,24 +252,26 @@ remain and FKs still validate. It auto-skips if `MXANON_TEST_DSN` is unset.
 ## File map
 
 ```
-mxanon/
-  src/mxanon/
-    cli.py                 # Click entry point
-    config.py              # YAML loader + pydantic schema + _global merge
-    db.py                  # introspection, chunked UPDATE, replication guard
-    determinism.py         # HMAC-seeded Faker
-    discover.py            # PII discovery (heuristics + value sampling)
-    row_transformers.py    # multi-column transformers (address_nl)
-    strategies/            # leaf strategies registered into a registry
-    system_tables.py       # system$user / system$filedocument / system$session
-    verify.py              # leak + sanity checks, JSON report writer
-  configs/
-    _global.yaml           # cross-app defaults; never committed per-app
-    testapp.yaml           # synthetic-app manifest (used by E2E test)
-    <appname>.yaml         # one per onboarded Mendix app
-  scripts/
-    restore-and-anon.ps1   # one-shot restore + anonymize + verify
-  tests/
-    fixtures/mini_mendix.sql
-    test_*.py
+src/MxAnonymizer/
+  cli.py                 # Click entry point
+  config.py              # YAML loader + pydantic schema + _global merge
+  db.py                  # introspection, chunked UPDATE, replication guard
+  determinism.py         # HMAC-seeded Faker
+  discover.py            # PII discovery (heuristics + value sampling)
+  row_transformers.py    # multi-column transformers (address_nl)
+  strategies/            # leaf strategies registered into a registry
+  system_tables.py       # system$user / system$filedocument / system$session
+  verify.py              # leak + sanity checks, JSON report writer
+configs/
+  _global.yaml           # cross-app defaults; extend this in per-app manifests
+  testapp.yaml           # example manifest (also used by E2E test)
+  <appname>.yaml         # one per onboarded Mendix app (not committed to this repo)
+scripts/
+  restore-and-anon.ps1   # one-shot restore + anonymize + verify
+tests/
+  fixtures/mini_mendix.sql
+  test_*.py
+CONTRIBUTING.md          # how to add strategies and submit PRs
+SECURITY.md              # responsible disclosure policy
+LICENSE                  # MIT
 ```

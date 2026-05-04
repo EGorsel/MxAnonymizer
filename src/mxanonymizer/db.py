@@ -16,12 +16,12 @@ import psycopg
 from psycopg import sql
 from psycopg.rows import dict_row
 
-from mxanon.config import Manifest, TableRule
-from mxanon.determinism import get_secret, short_hash
-from mxanon.row_transformers import get as get_row_transformer
-from mxanon.strategies import StrategyContext, get as get_strategy
+from mxanonymizer.config import Manifest, TableRule
+from mxanonymizer.determinism import get_secret, short_hash
+from mxanonymizer.row_transformers import get as get_row_transformer
+from mxanonymizer.strategies import StrategyContext, get as get_strategy
 
-log = logging.getLogger("mxanon.db")
+log = logging.getLogger("mxanonymizer.db")
 
 
 @dataclass

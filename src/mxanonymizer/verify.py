@@ -14,18 +14,28 @@ from pathlib import Path
 import psycopg
 from psycopg import sql
 
-from mxanon.config import Manifest
-from mxanon.db import describe_table
+from mxanonymizer.config import Manifest
+from mxanonymizer.db import describe_table
 
-log = logging.getLogger("mxanon.verify")
+log = logging.getLogger("mxanonymizer.verify")
 
-# Leak patterns: things that should NEVER appear in anonymized columns.
-LEAK_PATTERNS: dict[str, re.Pattern] = {
-    # Real-looking ANWB email domains.
-    "anwb_email": re.compile(r"@anwb\.(nl|com)$", re.IGNORECASE),
-    # Real Dutch IBAN bank codes (anonymized IBANs use TEST/FAKE/MXAN/ANON).
+# Default leak pattern: real Dutch IBAN bank codes.
+# Anonymized IBANs use TEST/FAKE/MXAN/ANON — any real bank code is a leak.
+_DEFAULT_LEAK_PATTERNS: dict[str, re.Pattern] = {
     "real_iban_bank": re.compile(r"^NL\d{2}(INGB|RABO|ABNA|TRIO|SNSB|ASNB|KNAB|BUNQ)\d{10}$"),
 }
+
+
+def _build_leak_patterns(manifest: Manifest) -> dict[str, re.Pattern]:
+    """Merge default patterns with manifest-declared verify_patterns.
+
+    Manifest entries override defaults by label. An empty verify_patterns
+    list means: use defaults only.
+    """
+    patterns = dict(_DEFAULT_LEAK_PATTERNS)
+    for vp in manifest.verify_patterns:
+        patterns[vp.label] = re.compile(vp.pattern, re.IGNORECASE)
+    return patterns
 
 
 def _select_column_values(
@@ -48,9 +58,14 @@ def _select_column_values(
 
 
 def check_leaks(
-    conn: psycopg.Connection, manifest: Manifest, schema: str = "public"
+    conn: psycopg.Connection,
+    manifest: Manifest,
+    schema: str = "public",
+    leak_patterns: dict[str, re.Pattern] | None = None,
 ) -> list[dict]:
     """Scan every column the manifest claims to anonymize for leak patterns."""
+    if leak_patterns is None:
+        leak_patterns = _build_leak_patterns(manifest)
     leaks: list[dict] = []
     for table_name, rule in manifest.tables.items():
         if rule.skip:
@@ -62,7 +77,7 @@ def check_leaks(
             ]
         for col in anonymized_columns:
             values = _select_column_values(conn, schema, table_name, col)
-            for label, pattern in LEAK_PATTERNS.items():
+            for label, pattern in leak_patterns.items():
                 hits = [v for v in values if pattern.search(v)]
                 if hits:
                     leaks.append({
@@ -133,7 +148,8 @@ def run_verification(
     conn: psycopg.Connection, manifest: Manifest, schema: str = "public"
 ) -> tuple[bool, dict]:
     """Returns (ok, report). `ok` is True iff no leaks and no constraint issues."""
-    leaks = check_leaks(conn, manifest, schema)
+    leak_patterns = _build_leak_patterns(manifest)
+    leaks = check_leaks(conn, manifest, schema, leak_patterns=leak_patterns)
     blob_issues = check_filedocument_stripped(conn, schema)
     constraint_issues = check_constraints(conn)
 

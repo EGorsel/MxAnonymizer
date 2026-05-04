@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from mxanon.determinism import short_hash
-from mxanon.strategies import StrategyContext, register
+from mxanonymizer.determinism import short_hash
+from mxanonymizer.strategies import StrategyContext, register
 
 
 @register("null_value")

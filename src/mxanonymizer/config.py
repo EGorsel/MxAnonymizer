@@ -1,4 +1,4 @@
-"""Config loader for mxanon.
+"""Config loader for mxanonymizer.
 
 Loads a per-app YAML manifest, merges it with `_global.yaml`, and validates
 the result with pydantic. Failed validation raises with a clear error pointing
@@ -62,6 +62,13 @@ class FreeTextEntry(BaseModel):
     column: str
 
 
+class VerifyPattern(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    pattern: str  # regex string; compiled at verify time
+
+
 class Manifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -72,6 +79,7 @@ class Manifest(BaseModel):
     system_user: SystemUserSettings = Field(default_factory=SystemUserSettings)
     tables: dict[str, TableRule] = Field(default_factory=dict)
     free_text_review: list[FreeTextEntry] = Field(default_factory=list)
+    verify_patterns: list[VerifyPattern] = Field(default_factory=list)
 
 
 class ConfigError(Exception):

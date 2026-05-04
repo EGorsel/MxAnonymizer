@@ -15,10 +15,10 @@ import pytest
 
 psycopg = pytest.importorskip("psycopg")
 
-from mxanon.config import load_manifest
-from mxanon.db import run_anonymization
-from mxanon.system_tables import apply_system_rules
-from mxanon.verify import run_verification
+from mxanonymizer.config import load_manifest
+from mxanonymizer.db import run_anonymization
+from mxanonymizer.system_tables import apply_system_rules
+from mxanonymizer.verify import run_verification
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = REPO_ROOT / "tests" / "fixtures" / "mini_mendix.sql"
@@ -26,7 +26,7 @@ MANIFEST = REPO_ROOT / "configs" / "testapp.yaml"
 
 DSN = os.environ.get("MXANON_TEST_DSN")
 pytestmark = pytest.mark.skipif(
-    not DSN, reason="Set MXANON_TEST_DSN to run E2E (e.g. 'postgresql://localhost/mxanon_test')"
+    not DSN, reason="Set MXANON_TEST_DSN to run E2E (e.g. 'postgresql://localhost/mxanonymizer_test')"
 )
 
 

@@ -1,4 +1,6 @@
-# Manifest for the synthetic test app (used by E2E tests).
+# Example manifest — also used by the E2E test suite.
+# Copy and adapt this as a starting point for your own Mendix app.
+# Run `MxAnonymizer discover --app <name> --conn <dsn>` to generate a draft from your schema.
 app: testapp
 extends: _global.yaml
 

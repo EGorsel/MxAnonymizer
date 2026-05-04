@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from mxanon.determinism import DeterminismError, get_secret, seed_for, seeded_faker, short_hash
+from mxanonymizer.determinism import DeterminismError, get_secret, seed_for, seeded_faker, short_hash
 
 
 def test_get_secret_missing(monkeypatch):

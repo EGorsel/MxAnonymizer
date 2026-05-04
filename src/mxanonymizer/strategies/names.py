@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from mxanon.determinism import seeded_faker
-from mxanon.strategies import StrategyContext, register
+from mxanonymizer.determinism import seeded_faker
+from mxanonymizer.strategies import StrategyContext, register
 
 
 def _faker(ctx: StrategyContext):

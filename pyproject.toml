@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mxanon"
+name = "mxanonymizer"
 version = "0.1.0"
 description = "Anonymize Mendix production PostgreSQL dumps for safe local debugging."
 readme = "README.md"
 requires-python = ">=3.11"
-authors = [{ name = "ANWB Mendix team" }]
-license = { text = "Proprietary" }
+authors = [{ name = "MxAnonymizer contributors" }]
+license = { text = "MIT" }
 dependencies = [
     "click>=8.1",
     "psycopg[binary]>=3.2",
@@ -27,10 +27,10 @@ dev = [
 ]
 
 [project.scripts]
-mxanon = "mxanon.cli:main"
+mxanonymizer = "mxanonymizer.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mxanon"]
+packages = ["src/mxanonymizer"]
 
 [tool.ruff]
 line-length = 100

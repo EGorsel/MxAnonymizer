@@ -7,8 +7,8 @@ from datetime import date
 
 import pytest
 
-from mxanon.strategies import StrategyContext, get
-from mxanon.strategies.finance import _bsn_eleven_test_passes, _iban_check_digits
+from mxanonymizer.strategies import StrategyContext, get
+from mxanonymizer.strategies.finance import _bsn_eleven_test_passes, _iban_check_digits
 
 SECRET = b"unit-test-secret"
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from mxanon.determinism import seeded_faker, short_hash
-from mxanon.strategies import StrategyContext, register
+from mxanonymizer.determinism import seeded_faker, short_hash
+from mxanonymizer.strategies import StrategyContext, register
 
 _FAKE_EMAIL_DOMAIN = "anonymized.example.invalid"  # RFC 2606 — never deliverable.
 

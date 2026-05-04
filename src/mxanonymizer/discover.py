@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import psycopg
 from psycopg import sql
 
-log = logging.getLogger("mxanon.discover")
+log = logging.getLogger("mxanonymizer.discover")
 
 # (lowercased exact-match or substring rule, strategy, deterministic, category)
 NAME_HEURISTICS: list[tuple[str, str, bool, str]] = [
@@ -181,7 +181,7 @@ def discover(
     sample_size: int = 100,
 ) -> tuple[list[ColumnCandidate], list[tuple[str, str]]]:
     """Walk the schema; return PII candidates and free-text-review entries."""
-    from mxanon.db import describe_table, list_tables
+    from mxanonymizer.db import describe_table, list_tables
 
     candidates: list[ColumnCandidate] = []
     free_text: list[tuple[str, str]] = []

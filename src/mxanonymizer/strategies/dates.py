@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from mxanon.determinism import seed_for
-from mxanon.strategies import StrategyContext, register
+from mxanonymizer.determinism import seed_for
+from mxanonymizer.strategies import StrategyContext, register
 
 
 @register("shift_date_days")

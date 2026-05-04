@@ -55,7 +55,7 @@ def known() -> list[str]:
 
 
 # Trigger registration of all leaf strategies.
-from mxanon.strategies import (  # noqa: E402,F401
+from mxanonymizer.strategies import (  # noqa: E402,F401
     address_nl,
     contact,
     dates,

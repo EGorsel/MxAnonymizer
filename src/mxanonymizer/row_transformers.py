@@ -24,7 +24,7 @@ import string
 from collections.abc import Callable
 from typing import Any
 
-from mxanon.determinism import seeded_faker
+from mxanonymizer.determinism import seeded_faker
 
 RowTransformer = Callable[[bytes, str, dict[str, Any], dict[str, str], str], dict[str, Any]]
 

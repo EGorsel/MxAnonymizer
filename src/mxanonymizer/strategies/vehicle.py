@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import string
 
-from mxanon.determinism import seeded_faker
-from mxanon.strategies import StrategyContext, register
+from mxanonymizer.determinism import seeded_faker
+from mxanonymizer.strategies import StrategyContext, register
 
 # Dutch sidecode patterns. We use sidecode 6 (`12-AAA-1`) since it's currently
 # in active issuance and easy to read.
@@ -30,10 +30,10 @@ def fake_license_plate_nl(ctx: StrategyContext) -> str | None:
 
 @register("fake_vin")
 def fake_vin(ctx: StrategyContext) -> str | None:
-    """17-char VIN-shaped string (not a valid checksum — labelled `MXANON`)."""
+    """17-char VIN-shaped string (not a valid checksum — labelled `mxanonymizer`)."""
     if ctx.value is None:
         return None
     f = _faker(ctx)
     chars = string.ascii_uppercase.replace("I", "").replace("O", "").replace("Q", "") + string.digits
     body = "".join(f.random_element(chars) for _ in range(11))
-    return f"MXANON{body}"
+    return f"mxanonymizer{body}"

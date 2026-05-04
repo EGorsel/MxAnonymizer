@@ -20,10 +20,10 @@ import psycopg
 from passlib.hash import bcrypt
 from psycopg import sql
 
-from mxanon.config import Manifest
-from mxanon.db import describe_table
+from mxanonymizer.config import Manifest
+from mxanonymizer.db import describe_table
 
-log = logging.getLogger("mxanon.system")
+log = logging.getLogger("mxanonymizer.system")
 
 SYSTEM_USER_TABLE = "system$user"
 SYSTEM_FILEDOC_TABLE = "system$filedocument"
@@ -80,7 +80,7 @@ def anonymize_system_user_identity(
     """Anonymize Name/Email/FullName columns on system$user. Preserves PK and
     role association rows (we never touch those).
     """
-    from mxanon.strategies import StrategyContext, get as get_strategy
+    from mxanonymizer.strategies import StrategyContext, get as get_strategy
 
     if not _table_exists(conn, SYSTEM_USER_TABLE, schema):
         return 0
@@ -205,7 +205,7 @@ def truncate_sessions(conn: psycopg.Connection, schema: str = "public") -> int:
 
 def apply_system_rules(conn: psycopg.Connection, manifest: Manifest, schema: str = "public") -> dict:
     """Apply all `_global`-driven system$* rules per the manifest."""
-    from mxanon.determinism import get_secret
+    from mxanonymizer.determinism import get_secret
 
     stats: dict = {}
 
