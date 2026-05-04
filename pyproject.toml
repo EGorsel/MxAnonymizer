@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mxanon"
+version = "0.1.0"
+description = "Anonymize Mendix production PostgreSQL dumps for safe local debugging."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "ANWB Mendix team" }]
+license = { text = "Proprietary" }
+dependencies = [
+    "click>=8.1",
+    "psycopg[binary]>=3.2",
+    "Faker>=30.0",
+    "PyYAML>=6.0",
+    "pydantic>=2.7",
+    "passlib[bcrypt]>=1.7.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+mxanon = "mxanon.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mxanon"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

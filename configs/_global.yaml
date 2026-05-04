@@ -1,0 +1,17 @@
+# Global rules applied to every Mendix app. Per-app manifests `extends:` this.
+# Keep this list short — only Mendix-system concerns belong here.
+
+defaults:
+  locale: nl_NL
+  determinism_secret_env: MXANON_SECRET
+  chunk_size: 5000
+
+file_document:
+  strategy: strip_blobs
+
+system_user:
+  reset_password_hash: true
+  dev_password_env: MXANON_DEV_PASSWORD
+  anonymize_email: true
+  anonymize_name: true
+  preserve_role_associations: true

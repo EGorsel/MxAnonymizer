@@ -1,0 +1,33 @@
+# Manifest for the synthetic test app (used by E2E tests).
+app: testapp
+extends: _global.yaml
+
+tables:
+  crm$customer:
+    row_transformer: address_nl
+    params:
+      street: Street
+      huisnummer: Huisnummer
+      postcode: Postcode
+      city: City
+      country: Country
+    columns:
+      Firstname:   { strategy: fake_first_name, deterministic: true }
+      Lastname:    { strategy: fake_last_name, deterministic: true }
+      Email:       { strategy: fake_email_from_name, deterministic: true }
+      Phonenumber: { strategy: fake_phone_nl, deterministic: true }
+      BSN:         { strategy: null_value }
+      IBAN:        { strategy: fake_iban_nl, deterministic: true }
+      Kenteken:    { strategy: fake_license_plate_nl, deterministic: true }
+      DateOfBirth: { strategy: shift_date_days, params: { range: 365 }, deterministic: true }
+      Notes:       { strategy: redact, params: { replacement: "[REDACTED]" } }
+
+  crm$claim:
+    columns:
+      Description: { strategy: redact, params: { replacement: "[REDACTED]" } }
+
+  crm$customer_assoc_claim:
+    skip: true
+
+free_text_review:
+  - { table: crm$claim, column: ClaimNumber }
