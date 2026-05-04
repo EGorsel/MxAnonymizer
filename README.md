@@ -1,4 +1,4 @@
-# mxanon
+# MxAnonymizer
 
 Anonymize Mendix production PostgreSQL dumps so they're safe to debug against
 locally. Targets ANWB Mendix apps (Studio Pro 10.x), but the engine is
